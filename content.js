@@ -1,7 +1,7 @@
 // Symbol別ポジションタイマー管理クラス
 class SymbolPositionTimer {
   constructor() {
-    this.symbolTimers = new Map(); // Symbol -> { startTime, element, interval }
+    this.symbolTimers = new Map(); // Symbol -> { startTime, element, interval, fontSize, width, height }
     this.observer = null;
     this.savedPositions = this.loadPositions();
     this.init();
@@ -48,13 +48,16 @@ class SymbolPositionTimer {
     // タイマー表示用の要素を作成
     const timerElement = document.createElement('div');
     timerElement.id = timerId;
-    timerElement.className = 'topstepx-symbol-timer';
+    timerElement.className = 'topstepx-symbol-timer font-size-normal';
     
-    // 保存された位置または初期位置を設定
+    // 保存された設定を復元
     const savedPos = this.savedPositions[symbol];
     if (savedPos) {
       timerElement.style.left = `${savedPos.left}px`;
       timerElement.style.top = `${savedPos.top}px`;
+      if (savedPos.width) timerElement.style.width = `${savedPos.width}px`;
+      if (savedPos.height) timerElement.style.height = `${savedPos.height}px`;
+      if (savedPos.fontSize) timerElement.className = `topstepx-symbol-timer ${savedPos.fontSize}`;
     } else {
       // 初期位置（右下から順番に配置）
       const baseRight = 20;
@@ -63,23 +66,223 @@ class SymbolPositionTimer {
       
       timerElement.style.right = `${baseRight}px`;
       timerElement.style.bottom = `${baseBottom + offset}px`;
+      timerElement.style.width = '140px';
+      timerElement.style.height = '70px';
     }
     
     timerElement.innerHTML = `
       <div class="symbol-timer-container">
         <div class="symbol-timer-header">
           <span class="symbol-name">${symbol}</span>
-          <button class="timer-close-btn" onclick="this.closest('.topstepx-symbol-timer').style.display='none'">×</button>
+          <div class="timer-controls">
+            <button class="timer-control-btn font-btn" title="フォントサイズ変更">A</button>
+            <button class="timer-control-btn timer-close-btn" title="閉じる">×</button>
+          </div>
         </div>
         <div class="timer-display">00:00</div>
+        <div class="resize-handle resize-handle-se" title="リサイズ"></div>
+        <div class="resize-handle resize-handle-s" title="縦リサイズ"></div>
+        <div class="resize-handle resize-handle-e" title="横リサイズ"></div>
       </div>
     `;
     
-    // ドラッグ機能を追加
+    // 機能を初期化
     this.initDragFunctionality(timerElement, symbol);
+    this.initResizeFunctionality(timerElement, symbol);
+    this.initFontSizeControl(timerElement, symbol);
+    this.initCloseButton(timerElement);
     
     document.body.appendChild(timerElement);
     return timerElement;
+  }
+
+  // フォントサイズ制御を初期化
+  initFontSizeControl(timerElement, symbol) {
+    const fontBtn = timerElement.querySelector('.font-btn');
+    const fontSizes = ['font-size-small', 'font-size-normal', 'font-size-large', 'font-size-xlarge'];
+    let currentFontIndex = 1; // normal
+    
+    // 保存されたフォントサイズを復元
+    const savedPos = this.savedPositions[symbol];
+    if (savedPos && savedPos.fontSize) {
+      currentFontIndex = fontSizes.indexOf(savedPos.fontSize);
+      if (currentFontIndex === -1) currentFontIndex = 1;
+    }
+    
+    fontBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      
+      // 次のフォントサイズに変更
+      currentFontIndex = (currentFontIndex + 1) % fontSizes.length;
+      const newFontSize = fontSizes[currentFontIndex];
+      
+      // クラスを更新
+      timerElement.className = `topstepx-symbol-timer ${newFontSize}`;
+      
+      // 設定を保存
+      if (!this.savedPositions[symbol]) {
+        this.savedPositions[symbol] = {};
+      }
+      this.savedPositions[symbol].fontSize = newFontSize;
+      this.savePositions();
+    });
+  }
+
+  // 閉じるボタンを初期化
+  initCloseButton(timerElement) {
+    const closeBtn = timerElement.querySelector('.timer-close-btn');
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      timerElement.style.display = 'none';
+    });
+  }
+
+  // リサイズ機能を初期化
+  initResizeFunctionality(timerElement, symbol) {
+    const resizeHandles = timerElement.querySelectorAll('.resize-handle');
+    
+    resizeHandles.forEach(handle => {
+      let isResizing = false;
+      let startX = 0;
+      let startY = 0;
+      let startWidth = 0;
+      let startHeight = 0;
+      
+      const handleMouseDown = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        
+        const rect = timerElement.getBoundingClientRect();
+        startWidth = rect.width;
+        startHeight = rect.height;
+        
+        timerElement.classList.add('resizing');
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+      };
+      
+      const handleMouseMove = (e) => {
+        if (!isResizing) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        
+        if (handle.classList.contains('resize-handle-se')) {
+          newWidth = startWidth + deltaX;
+          newHeight = startHeight + deltaY;
+        } else if (handle.classList.contains('resize-handle-s')) {
+          newHeight = startHeight + deltaY;
+        } else if (handle.classList.contains('resize-handle-e')) {
+          newWidth = startWidth + deltaX;
+        }
+        
+        // 最小サイズを制限
+        newWidth = Math.max(120, newWidth);
+        newHeight = Math.max(60, newHeight);
+        
+        // 最大サイズを制限（画面サイズに基づく）
+        newWidth = Math.min(window.innerWidth - 50, newWidth);
+        newHeight = Math.min(window.innerHeight - 50, newHeight);
+        
+        timerElement.style.width = `${newWidth}px`;
+        timerElement.style.height = `${newHeight}px`;
+      };
+      
+      const handleMouseUp = () => {
+        if (!isResizing) return;
+        
+        isResizing = false;
+        timerElement.classList.remove('resizing');
+        
+        // サイズを保存
+        const rect = timerElement.getBoundingClientRect();
+        if (!this.savedPositions[symbol]) {
+          this.savedPositions[symbol] = {};
+        }
+        this.savedPositions[symbol].width = rect.width;
+        this.savedPositions[symbol].height = rect.height;
+        this.savePositions();
+        
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+      
+      // タッチデバイス対応
+      const handleTouchStart = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        isResizing = true;
+        startX = touch.clientX;
+        startY = touch.clientY;
+        
+        const rect = timerElement.getBoundingClientRect();
+        startWidth = rect.width;
+        startHeight = rect.height;
+        
+        timerElement.classList.add('resizing');
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd);
+      };
+      
+      const handleTouchMove = (e) => {
+        if (!isResizing) return;
+        
+        e.preventDefault();
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        
+        if (handle.classList.contains('resize-handle-se')) {
+          newWidth = startWidth + deltaX;
+          newHeight = startHeight + deltaY;
+        } else if (handle.classList.contains('resize-handle-s')) {
+          newHeight = startHeight + deltaY;
+        } else if (handle.classList.contains('resize-handle-e')) {
+          newWidth = startWidth + deltaX;
+        }
+        
+        newWidth = Math.max(120, Math.min(window.innerWidth - 50, newWidth));
+        newHeight = Math.max(60, Math.min(window.innerHeight - 50, newHeight));
+        
+        timerElement.style.width = `${newWidth}px`;
+        timerElement.style.height = `${newHeight}px`;
+      };
+      
+      const handleTouchEnd = () => {
+        if (!isResizing) return;
+        
+        isResizing = false;
+        timerElement.classList.remove('resizing');
+        
+        const rect = timerElement.getBoundingClientRect();
+        if (!this.savedPositions[symbol]) {
+          this.savedPositions[symbol] = {};
+        }
+        this.savedPositions[symbol].width = rect.width;
+        this.savedPositions[symbol].height = rect.height;
+        this.savePositions();
+        
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+      };
+      
+      handle.addEventListener('mousedown', handleMouseDown);
+      handle.addEventListener('touchstart', handleTouchStart, { passive: false });
+    });
   }
 
   initDragFunctionality(timerElement, symbol) {
@@ -90,8 +293,11 @@ class SymbolPositionTimer {
     let initialY = 0;
 
     const handleMouseDown = (e) => {
-      // 閉じるボタンをクリックした場合はドラッグしない
-      if (e.target.classList.contains('timer-close-btn')) return;
+      // リサイズハンドルやボタンをクリックした場合はドラッグしない
+      if (e.target.classList.contains('resize-handle') || 
+          e.target.classList.contains('timer-control-btn')) {
+        return;
+      }
       
       isDragging = true;
       startX = e.clientX;
@@ -138,10 +344,11 @@ class SymbolPositionTimer {
       
       // 現在の位置を保存
       const rect = timerElement.getBoundingClientRect();
-      this.savedPositions[symbol] = {
-        top: rect.top,
-        left: rect.left
-      };
+      if (!this.savedPositions[symbol]) {
+        this.savedPositions[symbol] = {};
+      }
+      this.savedPositions[symbol].top = rect.top;
+      this.savedPositions[symbol].left = rect.left;
       this.savePositions();
       
       document.removeEventListener('mousemove', handleMouseMove);
@@ -150,7 +357,10 @@ class SymbolPositionTimer {
 
     // タッチデバイス対応
     const handleTouchStart = (e) => {
-      if (e.target.classList.contains('timer-close-btn')) return;
+      if (e.target.classList.contains('resize-handle') || 
+          e.target.classList.contains('timer-control-btn')) {
+        return;
+      }
       
       const touch = e.touches[0];
       isDragging = true;
@@ -199,19 +409,27 @@ class SymbolPositionTimer {
       timerElement.style.transition = '';
       
       const rect = timerElement.getBoundingClientRect();
-      this.savedPositions[symbol] = {
-        top: rect.top,
-        left: rect.left
-      };
+      if (!this.savedPositions[symbol]) {
+        this.savedPositions[symbol] = {};
+      }
+      this.savedPositions[symbol].top = rect.top;
+      this.savedPositions[symbol].left = rect.left;
       this.savePositions();
       
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
 
-    // イベントリスナーを追加
-    timerElement.addEventListener('mousedown', handleMouseDown);
-    timerElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    // イベントリスナーを追加（ヘッダー部分のみドラッグ可能）
+    const header = timerElement.querySelector('.symbol-timer-header');
+    const container = timerElement.querySelector('.symbol-timer-container');
+    
+    header.addEventListener('mousedown', handleMouseDown);
+    header.addEventListener('touchstart', handleTouchStart, { passive: false });
+    
+    // コンテナ全体でもドラッグ可能（リサイズハンドル以外）
+    container.addEventListener('mousedown', handleMouseDown);
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
   }
 
   startObserving() {
