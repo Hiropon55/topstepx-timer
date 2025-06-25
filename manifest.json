@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TopstepX Position Timer",
   "version": "1.0.0",
-  "description": "TopstepXのトレード画面でポジション保有時間を表示",
+  "description": "TopstepXのトレード画面でポジション保有時間を表示します。必ずPositionsタブを表示させてください。",
   "permissions": [
     "activeTab"
   ],
