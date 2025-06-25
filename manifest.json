@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "TopstepX Position Timer",
+  "version": "1.0.0",
+  "description": "TopstepXのトレード画面でポジション保有時間を表示",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.topstepx.com/*",
+    "*://topstepx.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.topstepx.com/*",
+        "*://topstepx.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["timer.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

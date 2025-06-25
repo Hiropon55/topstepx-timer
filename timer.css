@@ -1,0 +1,86 @@
+/* ポジションタイマーのスタイル */
+#topstepx-position-timer {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999999;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  user-select: none;
+  pointer-events: none;
+}
+
+.timer-container {
+  background: rgba(24, 26, 31, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  min-width: 180px;
+  text-align: center;
+}
+
+.timer-label {
+  color: #8b92a5;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.timer-display {
+  color: #8b92a5;
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.timer-display.active {
+  color: #4ade80;
+  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  #topstepx-position-timer {
+    top: 10px;
+    right: 10px;
+  }
+  
+  .timer-container {
+    padding: 10px 16px;
+    min-width: 150px;
+  }
+  
+  .timer-label {
+    font-size: 11px;
+  }
+  
+  .timer-display {
+    font-size: 20px;
+  }
+}
+
+/* ダークモード対応（既にダーク系の色を使用） */
+@media (prefers-color-scheme: light) {
+  .timer-container {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .timer-label {
+    color: #6b7280;
+  }
+  
+  .timer-display {
+    color: #6b7280;
+  }
+  
+  .timer-display.active {
+    color: #22c55e;
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+  }
+}
