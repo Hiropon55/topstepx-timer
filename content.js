@@ -5,6 +5,9 @@ class PositionTimer {
     this.timerInterval = null;
     this.timerElement = null;
     this.observer = null;
+    this.isDragging = false;
+    this.dragOffset = { x: 0, y: 0 };
+    this.savedPosition = this.loadPosition();
     this.init();
   }
 
@@ -12,11 +15,35 @@ class PositionTimer {
     // タイマー表示要素を作成
     this.createTimerElement();
     
+    // ドラッグ機能を初期化
+    this.initDragFunctionality();
+    
     // DOM監視を開始
     this.startObserving();
     
     // 初期状態をチェック
     this.checkPositions();
+  }
+
+  // 位置情報をlocalStorageから読み込み
+  loadPosition() {
+    try {
+      const saved = localStorage.getItem('topstepx-timer-position');
+      return saved ? JSON.parse(saved) : { bottom: 20, right: 20 };
+    } catch (error) {
+      console.error('TopstepX Timer: Error loading position:', error);
+      return { bottom: 20, right: 20 };
+    }
+  }
+
+  // 位置情報をlocalStorageに保存
+  savePosition(position) {
+    try {
+      localStorage.setItem('topstepx-timer-position', JSON.stringify(position));
+      this.savedPosition = position;
+    } catch (error) {
+      console.error('TopstepX Timer: Error saving position:', error);
+    }
   }
 
   createTimerElement() {
@@ -29,6 +56,22 @@ class PositionTimer {
     // タイマー表示用のDIVを作成
     this.timerElement = document.createElement('div');
     this.timerElement.id = 'topstepx-position-timer';
+    
+    // 保存された位置を適用
+    if (this.savedPosition.top !== undefined) {
+      this.timerElement.style.top = `${this.savedPosition.top}px`;
+      this.timerElement.style.bottom = 'auto';
+    } else {
+      this.timerElement.style.bottom = `${this.savedPosition.bottom}px`;
+    }
+    
+    if (this.savedPosition.left !== undefined) {
+      this.timerElement.style.left = `${this.savedPosition.left}px`;
+      this.timerElement.style.right = 'auto';
+    } else {
+      this.timerElement.style.right = `${this.savedPosition.right}px`;
+    }
+    
     this.timerElement.innerHTML = `
       <div class="timer-container">
         <div class="timer-label">Position Time</div>
@@ -36,6 +79,134 @@ class PositionTimer {
       </div>
     `;
     document.body.appendChild(this.timerElement);
+  }
+
+  initDragFunctionality() {
+    let startX = 0;
+    let startY = 0;
+    let initialX = 0;
+    let initialY = 0;
+
+    const handleMouseDown = (e) => {
+      this.isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const rect = this.timerElement.getBoundingClientRect();
+      initialX = rect.left;
+      initialY = rect.top;
+      
+      this.timerElement.style.transition = 'none';
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      e.preventDefault();
+    };
+
+    const handleMouseMove = (e) => {
+      if (!this.isDragging) return;
+      
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      let newX = initialX + deltaX;
+      let newY = initialY + deltaY;
+      
+      // 画面境界内に制限
+      const rect = this.timerElement.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width;
+      const maxY = window.innerHeight - rect.height;
+      
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
+      
+      this.timerElement.style.left = `${newX}px`;
+      this.timerElement.style.top = `${newY}px`;
+      this.timerElement.style.right = 'auto';
+      this.timerElement.style.bottom = 'auto';
+    };
+
+    const handleMouseUp = () => {
+      if (!this.isDragging) return;
+      
+      this.isDragging = false;
+      this.timerElement.style.transition = '';
+      
+      // 現在の位置を保存
+      const rect = this.timerElement.getBoundingClientRect();
+      const position = {
+        top: rect.top,
+        left: rect.left
+      };
+      this.savePosition(position);
+      
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    // タッチデバイス対応
+    const handleTouchStart = (e) => {
+      const touch = e.touches[0];
+      this.isDragging = true;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      
+      const rect = this.timerElement.getBoundingClientRect();
+      initialX = rect.left;
+      initialY = rect.top;
+      
+      this.timerElement.style.transition = 'none';
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+      e.preventDefault();
+    };
+
+    const handleTouchMove = (e) => {
+      if (!this.isDragging) return;
+      
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+      
+      let newX = initialX + deltaX;
+      let newY = initialY + deltaY;
+      
+      // 画面境界内に制限
+      const rect = this.timerElement.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width;
+      const maxY = window.innerHeight - rect.height;
+      
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
+      
+      this.timerElement.style.left = `${newX}px`;
+      this.timerElement.style.top = `${newY}px`;
+      this.timerElement.style.right = 'auto';
+      this.timerElement.style.bottom = 'auto';
+      
+      e.preventDefault();
+    };
+
+    const handleTouchEnd = () => {
+      if (!this.isDragging) return;
+      
+      this.isDragging = false;
+      this.timerElement.style.transition = '';
+      
+      // 現在の位置を保存
+      const rect = this.timerElement.getBoundingClientRect();
+      const position = {
+        top: rect.top,
+        left: rect.left
+      };
+      this.savePosition(position);
+      
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+
+    // イベントリスナーを追加
+    this.timerElement.addEventListener('mousedown', handleMouseDown);
+    this.timerElement.addEventListener('touchstart', handleTouchStart, { passive: false });
   }
 
   startObserving() {
