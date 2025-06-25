@@ -1,8 +1,6 @@
-/* ポジションタイマーのスタイル */
-#topstepx-position-timer {
+/* Symbol別ポジションタイマーのスタイル */
+.topstepx-symbol-timer {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
   z-index: 999999;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   user-select: none;
@@ -10,87 +8,173 @@
   cursor: move;
 }
 
-.timer-container {
+.symbol-timer-container {
   background: rgba(24, 26, 31, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 12px 20px;
+  border-radius: 6px;
+  padding: 8px 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
-  min-width: 180px;
+  min-width: 120px;
   text-align: center;
   transition: transform 0.1s ease;
 }
 
-.timer-container:hover {
+.symbol-timer-container:hover {
   transform: scale(1.02);
 }
 
-.timer-container:active {
+.symbol-timer-container:active {
   transform: scale(0.98);
 }
 
-.timer-label {
-  color: #8b92a5;
-  font-size: 12px;
-  font-weight: 500;
+.symbol-timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.symbol-name {
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  text-shadow: 0 0 5px rgba(251, 191, 36, 0.3);
+}
+
+.timer-close-btn {
+  background: none;
+  border: none;
+  color: #8b92a5;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.timer-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
 }
 
 .timer-display {
-  color: #8b92a5;
-  font-size: 24px;
+  color: #4ade80;
+  font-size: 16px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1;
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.3);
   transition: color 0.3s ease;
 }
 
-.timer-display.active {
-  color: #4ade80;
-  text-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+/* 複数タイマーが重ならないように調整 */
+.topstepx-symbol-timer:nth-child(odd) .symbol-timer-container {
+  border-left: 3px solid #fbbf24;
+}
+
+.topstepx-symbol-timer:nth-child(even) .symbol-timer-container {
+  border-left: 3px solid #06b6d4;
+}
+
+.topstepx-symbol-timer:nth-child(3n) .symbol-timer-container {
+  border-left: 3px solid #a855f7;
+}
+
+.topstepx-symbol-timer:nth-child(4n) .symbol-timer-container {
+  border-left: 3px solid #ef4444;
 }
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
-  #topstepx-position-timer {
-    bottom: 10px;
-    right: 10px;
+  .symbol-timer-container {
+    padding: 6px 10px;
+    min-width: 100px;
   }
   
-  .timer-container {
-    padding: 10px 16px;
-    min-width: 150px;
-  }
-  
-  .timer-label {
-    font-size: 11px;
+  .symbol-name {
+    font-size: 10px;
   }
   
   .timer-display {
-    font-size: 20px;
+    font-size: 14px;
+  }
+  
+  .timer-close-btn {
+    width: 14px;
+    height: 14px;
+    font-size: 12px;
   }
 }
 
-/* ダークモード対応（既にダーク系の色を使用） */
+/* ダークモード対応 */
 @media (prefers-color-scheme: light) {
-  .timer-container {
+  .symbol-timer-container {
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(0, 0, 0, 0.1);
   }
   
-  .timer-label {
+  .symbol-name {
+    color: #d97706;
+    text-shadow: 0 0 5px rgba(217, 119, 6, 0.2);
+  }
+  
+  .timer-close-btn {
     color: #6b7280;
   }
   
   .timer-display {
-    color: #6b7280;
+    color: #059669;
+    text-shadow: 0 0 8px rgba(5, 150, 105, 0.2);
   }
   
-  .timer-display.active {
-    color: #22c55e;
-    text-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+  .topstepx-symbol-timer:nth-child(odd) .symbol-timer-container {
+    border-left: 3px solid #d97706;
   }
+
+  .topstepx-symbol-timer:nth-child(even) .symbol-timer-container {
+    border-left: 3px solid #0891b2;
+  }
+
+  .topstepx-symbol-timer:nth-child(3n) .symbol-timer-container {
+    border-left: 3px solid #9333ea;
+  }
+
+  .topstepx-symbol-timer:nth-child(4n) .symbol-timer-container {
+    border-left: 3px solid #dc2626;
+  }
+}
+
+/* アニメーション効果 */
+@keyframes timerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.topstepx-symbol-timer {
+  animation: timerFadeIn 0.3s ease-out;
+}
+
+/* ドラッグ中のスタイル */
+.topstepx-symbol-timer:active {
+  z-index: 9999999;
+}
+
+.topstepx-symbol-timer:active .symbol-timer-container {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transform: scale(1.05);
 }
