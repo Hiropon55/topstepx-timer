@@ -6,6 +6,10 @@
   user-select: none;
   pointer-events: auto;
   cursor: move;
+  resize: both;
+  overflow: hidden;
+  min-width: 120px;
+  min-height: 60px;
 }
 
 .symbol-timer-container {
@@ -15,9 +19,14 @@
   padding: 8px 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
-  min-width: 120px;
+  width: 100%;
+  height: 100%;
   text-align: center;
   transition: transform 0.1s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .symbol-timer-container:hover {
@@ -33,25 +42,34 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .symbol-name {
   color: #fbbf24;
-  font-size: 11px;
+  font-size: var(--timer-font-size, 11px);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-shadow: 0 0 5px rgba(251, 191, 36, 0.3);
+  flex-grow: 1;
+  text-align: left;
 }
 
-.timer-close-btn {
+.timer-controls {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.timer-control-btn {
   background: none;
   border: none;
   color: #8b92a5;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   cursor: pointer;
-  padding: 0;
+  padding: 2px;
   width: 16px;
   height: 16px;
   display: flex;
@@ -61,6 +79,11 @@
   transition: all 0.2s ease;
 }
 
+.timer-control-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
 .timer-close-btn:hover {
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
@@ -68,12 +91,79 @@
 
 .timer-display {
   color: #4ade80;
-  font-size: 16px;
+  font-size: var(--timer-display-size, 16px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+  line-height: 1.2;
   text-shadow: 0 0 8px rgba(74, 222, 128, 0.3);
   transition: color 0.3s ease;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* リサイズハンドル */
+.resize-handle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.2);
+  transition: background 0.2s ease;
+}
+
+.resize-handle:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.resize-handle-se {
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: se-resize;
+  border-top-left-radius: 6px;
+}
+
+.resize-handle-s {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 4px;
+  cursor: s-resize;
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+}
+
+.resize-handle-e {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  cursor: e-resize;
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+
+/* フォントサイズ別のスタイル調整 */
+.font-size-small {
+  --timer-font-size: 9px;
+  --timer-display-size: 12px;
+}
+
+.font-size-normal {
+  --timer-font-size: 11px;
+  --timer-display-size: 16px;
+}
+
+.font-size-large {
+  --timer-font-size: 13px;
+  --timer-display-size: 20px;
+}
+
+.font-size-xlarge {
+  --timer-font-size: 15px;
+  --timer-display-size: 24px;
 }
 
 /* 複数タイマーが重ならないように調整 */
@@ -95,23 +185,34 @@
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
-  .symbol-timer-container {
-    padding: 6px 10px;
+  .topstepx-symbol-timer {
     min-width: 100px;
+    min-height: 50px;
   }
   
-  .symbol-name {
+  .symbol-timer-container {
+    padding: 6px 10px;
+  }
+  
+  .timer-control-btn {
+    width: 14px;
+    height: 14px;
     font-size: 10px;
   }
   
-  .timer-display {
-    font-size: 14px;
+  .resize-handle-se {
+    width: 10px;
+    height: 10px;
   }
   
-  .timer-close-btn {
-    width: 14px;
-    height: 14px;
-    font-size: 12px;
+  .resize-handle-s {
+    width: 16px;
+    height: 3px;
+  }
+  
+  .resize-handle-e {
+    width: 3px;
+    height: 16px;
   }
 }
 
@@ -127,13 +228,26 @@
     text-shadow: 0 0 5px rgba(217, 119, 6, 0.2);
   }
   
-  .timer-close-btn {
+  .timer-control-btn {
     color: #6b7280;
+  }
+  
+  .timer-control-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #000000;
   }
   
   .timer-display {
     color: #059669;
     text-shadow: 0 0 8px rgba(5, 150, 105, 0.2);
+  }
+  
+  .resize-handle {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  .resize-handle:hover {
+    background: rgba(0, 0, 0, 0.4);
   }
   
   .topstepx-symbol-timer:nth-child(odd) .symbol-timer-container {
@@ -177,4 +291,32 @@
 .topstepx-symbol-timer:active .symbol-timer-container {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   transform: scale(1.05);
+}
+
+/* リサイズ中のスタイル */
+.topstepx-symbol-timer.resizing {
+  z-index: 9999999;
+}
+
+.topstepx-symbol-timer.resizing .symbol-timer-container {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transform: none;
+  transition: none;
+}
+
+/* ドラッグ無効化（リサイズハンドル部分） */
+.resize-handle {
+  cursor: pointer;
+}
+
+.resize-handle-se {
+  cursor: se-resize;
+}
+
+.resize-handle-s {
+  cursor: s-resize;
+}
+
+.resize-handle-e {
+  cursor: e-resize;
 }
