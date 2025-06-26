@@ -1,3 +1,4 @@
+// タイマー機能のjavascript
 // Symbol別ポジションタイマー管理クラス
 class SymbolPositionTimer {
   constructor() {
